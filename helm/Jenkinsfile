@@ -9,13 +9,13 @@ pipeline {
     }
     parameters { 
         choice(name: 'ENVIRONMENT', choices: ['dev', 'qa', 'uat', 'pre-prod', 'prod'], description: 'select your environment')
-        string(name: 'version', defaultValue: description: 'Enter you application version')
+        string(name: 'version', description: 'Enter you application version')
+        string(name: 'jira id',  description: 'Enter you application version')
     }
     environment {
-        DEBUG = 'true'
         appVersion = '' // this will become global, we can use across pipeline
         region = 'us-east-1'
-        account_id = '461997657539'
+        account_id = ''
         project = 'expense'
         environment = ''
         component = 'backend'
@@ -26,8 +26,35 @@ pipeline {
             steps {
                 script {
                     environment = params.ENVIRONMENT
-                    appVersion = params.version
+                    appVersion = params.version 
+                    account_id = pipelineGlobals.getAccountID(environment)
+                }
+            }
+        }
+        stage('Integration tests') {
+            when {
+                expression {params.ENVIRONMENT == 'qa' }
+            }
+            steps {
+                script {
+                    sh """ 
+                         echo "Run integration test"
+                      """
+                }
+            }
+        }
+         stage('check Jira') {
+            when {
+                expression {params.ENVIRONMENT == 'prod' }
+            }
+            steps {
+                script {
+                    sh """ 
+                         echo "check jira status"
+                         echo "check jira deployment window"
+                         echo "fail pipleine if above two are not true"
 
+                      """
                 }
             }
         }
